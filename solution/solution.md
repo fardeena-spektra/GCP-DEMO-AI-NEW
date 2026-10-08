@@ -2,13 +2,11 @@
 
 > Not part of the learner guide. Use it to test the lab end to end. Run in Cloud Shell after **Prepare the North Pole** succeeds.
 
-## Check the North Pole is ready (monitor.sh)
+## Check the North Pole is ready
 
-Run after **Prepare the North Pole** shows **Success**. It creates `~/monitor.sh` and runs it; run `bash ~/monitor.sh` again at any time.
+Run in Cloud Shell after **Prepare the North Pole** shows **Success**.
 
 ```bash
-cat > ~/monitor.sh <<'EOF'
-#!/bin/bash
 P=$(gcloud config get-value project 2>/dev/null)
 V=$(gcloud storage buckets list --format='value(name)' --filter='name~^santas-knowledge-vault-')
 echo "==== [1/4] Project: $P | Vault: $V ===="
@@ -20,8 +18,6 @@ gcloud storage buckets get-iam-policy gs://$V --format=json | python3 -c "
 import sys,json
 for b in json.load(sys.stdin).get('bindings',[]):
     if any('jingle-sa' in m for m in b['members']): print(b['role'])"
-EOF
-chmod +x ~/monitor.sh && bash ~/monitor.sh
 ```
 
 **Ready looks like:** 5 services (aiplatform, compute, iap, logging, storage), `north-pole-data.json` with version `2026-12`, and Jingle's roles `aiplatform.user`, `logging.logWriter`, `storage.objectViewer`.
