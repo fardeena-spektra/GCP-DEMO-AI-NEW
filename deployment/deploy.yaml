@@ -1,0 +1,164 @@
+# =============================================================================
+# CloudLabs | Fast Lane - The 12 Days of AI Christmas | Day 1: Jingle Awakens
+# One deployment per learner project. Creates only basic resources:
+#   north-pole-vpc / north-pole-subnet, firewalls (RDP + IAP-only "sleigh gate"),
+#   santas-knowledge-vault bucket, jingle-sa (Jingle's identity), labvm (Windows)
+# Lab setup (APIs, North Pole data, Jingle's permissions) is done by the
+# "Prepare the Lab Environment" validation step (runs as CloudLabs System).
+# Region: us-central1
+# =============================================================================
+resources:
+  - name: north-pole-vpc-@deploymentId
+    type: compute.v1.network
+    properties:
+      autoCreateSubnetworks: false
+
+  - name: north-pole-subnet-@deploymentId
+    type: compute.v1.subnetwork
+    properties:
+      network: $(ref.north-pole-vpc-@deploymentId.selfLink)
+      ipCidrRange: 10.1.0.0/24
+      region: @region
+
+  - name: allow-rdp-@deploymentId
+    type: compute.v1.firewall
+    properties:
+      network: $(ref.north-pole-vpc-@deploymentId.selfLink)
+      sourceRanges: ['0.0.0.0/0']
+      allowed:
+      - IPProtocol: tcp
+        ports: [3389]
+      targetTags: ['rdp']
+
+  - name: allow-http-https-@deploymentId
+    type: compute.v1.firewall
+    properties:
+      network: $(ref.north-pole-vpc-@deploymentId.selfLink)
+      sourceRanges: ['0.0.0.0/0']
+      allowed:
+      - IPProtocol: tcp
+        ports: [80, 443]
+      targetTags: ['http-server', 'https-server']
+
+  # --- Sleigh gate: only Google IAP may reach Jingle's workshop VM (SSH + agent port) ---
+  - name: sleigh-gate-iap-@deploymentId
+    type: compute.v1.firewall
+    properties:
+      network: $(ref.north-pole-vpc-@deploymentId.selfLink)
+      sourceRanges: ['35.235.240.0/20']
+      allowed:
+      - IPProtocol: tcp
+        ports: [22, 8080]
+      targetTags: ['jingle']
+
+  # --- Santa's Knowledge Vault: the North Pole data Jingle answers from ---------
+  - name: santas-knowledge-vault-@deploymentId
+    type: storage.v1.bucket
+    properties:
+      location: @region
+      storageClass: STANDARD
+      iamConfiguration:
+        uniformBucketLevelAccess:
+          enabled: true
+
+  # --- Jingle's own identity ----------------------------------------------------
+  - name: jingle-sa
+    type: iam.v1.serviceAccount
+    properties:
+      accountId: jingle-sa
+      displayName: Jingle - North Pole customer-support agent
+
+  # --- Elf workstation (web-based RDP) ------------------------------------------
+  - name: labvm-@deploymentId
+    type: compute.v1.instance
+    properties:
+      zone: @zone
+      machineType: zones/@zone/machineTypes/e2-standard-2
+      disks:
+      - deviceName: boot
+        type: PERSISTENT
+        boot: true
+        autoDelete: true
+        initializeParams:
+          sourceImage: projects/windows-cloud/global/images/windows-server-2022-dc-v20251112
+          diskSizeGb: 50
+      networkInterfaces:
+      - network: $(ref.north-pole-vpc-@deploymentId.selfLink)
+        subnetwork: $(ref.north-pole-subnet-@deploymentId.selfLink)
+        accessConfigs:
+        - name: External NAT
+          type: ONE_TO_ONE_NAT
+      tags:
+        items: ['rdp']
+      metadata:
+        items:
+        - key: windows-startup-script-ps1
+          value: |
+              $userName = "Labuser"
+              $password = ConvertTo-SecureString "Password.1!!" -AsPlainText -Force
+              if (-not (Get-LocalUser -Name $userName -ErrorAction SilentlyContinue)) {
+                New-LocalUser -Name $userName -Password $password -PasswordNeverExpires -UserMayNotChangePassword -AccountNeverExpires
+                Add-LocalGroupMember -Group "Administrators" -Member $userName
+              }
+              # Desktop shortcuts for every user
+              $desk = "C:\Users\Public\Desktop"
+              $edge = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+              if (-not (Test-Path $edge)) { $edge = "C:\Program Files\Microsoft\Edge\Application\msedge.exe" }
+              $ws = New-Object -ComObject WScript.Shell
+              foreach ($pair in "Google Cloud Console|https://console.cloud.google.com", "Google Cloud Shell|https://shell.cloud.google.com") {
+                $name = $pair.Split("|")[0]
+                $url  = $pair.Split("|")[1]
+                if (Test-Path $edge) {
+                  $s = $ws.CreateShortcut($desk + "\" + $name + ".lnk")
+                  $s.TargetPath = $edge
+                  $s.Arguments = $url
+                  $s.IconLocation = $edge + ",0"
+                  $s.Save()
+                } else {
+                  Set-Content -Path ($desk + "\" + $name + ".url") -Value ("[InternetShortcut]`r`nURL=" + $url)
+                }
+              }
+              # Edge: skip the first-run wizard
+              $pol = "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
+              New-Item -Path $pol -Force | Out-Null
+              New-ItemProperty -Path $pol -Name HideFirstRunExperience -Value 1 -PropertyType DWord -Force | Out-Null
+              Get-ScheduledTask -TaskName ServerManager -ErrorAction SilentlyContinue | Disable-ScheduledTask | Out-Null
+
+outputs:
+  - name: vpcName
+    value: $(ref.north-pole-vpc-@deploymentId.name)
+
+  - name: vpcId
+    value: $(ref.north-pole-vpc-@deploymentId.id)
+
+  - name: subnetName
+    value: $(ref.north-pole-subnet-@deploymentId.name)
+
+  - name: subnetId
+    value: $(ref.north-pole-subnet-@deploymentId.id)
+
+  - name: vmPublicIp
+    value: $(ref.labvm-@deploymentId.networkInterfaces[0].accessConfigs[0].natIP)
+
+  - name: vmPrivateIp
+    value: $(ref.labvm-@deploymentId.networkInterfaces[0].networkIP)
+
+  - name: vmUsername
+    value: "Labuser"
+
+  - name: vmPassword
+    value: "Password.1!!"
+
+  # --- Lab guide inject keys ---------------------------------------------------
+  - name: ProjectId
+    value: $(ref.jingle-sa.projectId)
+
+  - name: KbBucket
+    value: $(ref.santas-knowledge-vault-@deploymentId.name)
+
+  - name: AgentServiceAccount
+    value: $(ref.jingle-sa.email)
+
+  - name: Region
+    value: @region
+

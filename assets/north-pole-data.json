@@ -1,0 +1,46 @@
+{
+  "workshop": "North Pole Gifts",
+  "version": "2026-12",
+  "published": "2026-12-01",
+  "records": [
+    {
+      "name": "Order NP-1225",
+      "type": "Order tracking",
+      "keywords": ["np-1225", "1225", "order", "gift", "where", "track", "parcel"],
+      "gift": "Snow Globe Music Box",
+      "status": "Out for sleigh delivery",
+      "estimated_delivery": "23 December",
+      "carrier": "Rudolph Express"
+    },
+    {
+      "name": "Order NP-2412",
+      "type": "Order tracking",
+      "keywords": ["np-2412", "2412", "order", "gift", "where", "track", "parcel"],
+      "gift": "Elf Workshop Advent Calendar",
+      "status": "Being wrapped by the elves",
+      "estimated_delivery": "20 December",
+      "carrier": "Rudolph Express"
+    },
+    {
+      "name": "Delivery address change",
+      "type": "Policy",
+      "keywords": ["address", "change address", "delivery address", "change my address", "move"],
+      "rule": "You can change the delivery address until the elves start wrapping your gift. After that, the order cannot be redirected.",
+      "how": "Ask Jingle with your order number, or use My Orders > Change address."
+    },
+    {
+      "name": "Returns policy",
+      "type": "Policy",
+      "keywords": ["return", "returns", "refund", "exchange", "unwanted"],
+      "rule": "Gifts bought from 1 November can be returned until 31 January.",
+      "refund": "Refunded to the original payment method within 5 working days."
+    },
+    {
+      "name": "Last Christmas delivery",
+      "type": "Delivery dates",
+      "keywords": ["last", "christmas delivery", "delivery date", "cut-off", "cutoff", "order by", "in time", "last day"],
+      "standard": "Order by 18 December for delivery before Christmas",
+      "express": "Order by 22 December for delivery before Christmas (Rudolph Express)"
+    }
+  ]
+}

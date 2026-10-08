@@ -1,0 +1,20 @@
+[
+  {
+    "Name": "Day 1: Jingle Awakens (Developer)",
+    "Language": "English",
+    "Files": [
+      {
+        "RawFilePath": "https://raw.githubusercontent.com/fardeena-spektra/GCP-DEMO-AI-NEW/refs/heads/main/lab-guides/Day-01-Developer/getting-started.md",
+        "Order": 1
+      },
+      {
+        "RawFilePath": "https://raw.githubusercontent.com/fardeena-spektra/GCP-DEMO-AI-NEW/refs/heads/main/lab-guides/Day-01-Developer/Day-01-Jingle-Awakens.md",
+        "Order": 2
+      },
+      {
+        "RawFilePath": "https://raw.githubusercontent.com/fardeena-spektra/GCP-DEMO-AI-NEW/refs/heads/main/lab-guides/Day-01-Developer/knowledge-check.md",
+        "Order": 3
+      }
+    ]
+  }
+]
