@@ -1,29 +1,29 @@
 # =============================================================================
 # CloudLabs | Fast Lane - The 12 Days of AI Christmas | Day 1: Jingle Awakens
 # One deployment per learner project. Creates only basic resources:
-#   north-pole-vpc / north-pole-subnet, firewalls (RDP + IAP-only "sleigh gate"),
+#   clgvpc / clgsubnet (CloudLabs standard names, needed for web RDP), firewalls (RDP + IAP-only "sleigh gate"),
 #   santas-knowledge-vault bucket, jingle-sa (Jingle's identity), labvm (Windows)
 # Lab setup (APIs, North Pole data, Jingle's permissions) is done by the
 # "Prepare the Lab Environment" validation step (runs as CloudLabs System).
 # Region: us-central1
 # =============================================================================
 resources:
-  - name: north-pole-vpc-@deploymentId
+  - name: clgvpc-@deploymentId
     type: compute.v1.network
     properties:
       autoCreateSubnetworks: false
 
-  - name: north-pole-subnet-@deploymentId
+  - name: clgsubnet-@deploymentId
     type: compute.v1.subnetwork
     properties:
-      network: $(ref.north-pole-vpc-@deploymentId.selfLink)
+      network: $(ref.clgvpc-@deploymentId.selfLink)
       ipCidrRange: 10.1.0.0/24
       region: @region
 
   - name: allow-rdp-@deploymentId
     type: compute.v1.firewall
     properties:
-      network: $(ref.north-pole-vpc-@deploymentId.selfLink)
+      network: $(ref.clgvpc-@deploymentId.selfLink)
       sourceRanges: ['0.0.0.0/0']
       allowed:
       - IPProtocol: tcp
@@ -33,7 +33,7 @@ resources:
   - name: allow-http-https-@deploymentId
     type: compute.v1.firewall
     properties:
-      network: $(ref.north-pole-vpc-@deploymentId.selfLink)
+      network: $(ref.clgvpc-@deploymentId.selfLink)
       sourceRanges: ['0.0.0.0/0']
       allowed:
       - IPProtocol: tcp
@@ -44,7 +44,7 @@ resources:
   - name: sleigh-gate-iap-@deploymentId
     type: compute.v1.firewall
     properties:
-      network: $(ref.north-pole-vpc-@deploymentId.selfLink)
+      network: $(ref.clgvpc-@deploymentId.selfLink)
       sourceRanges: ['35.235.240.0/20']
       allowed:
       - IPProtocol: tcp
@@ -83,8 +83,8 @@ resources:
           sourceImage: projects/windows-cloud/global/images/windows-server-2022-dc-v20251112
           diskSizeGb: 50
       networkInterfaces:
-      - network: $(ref.north-pole-vpc-@deploymentId.selfLink)
-        subnetwork: $(ref.north-pole-subnet-@deploymentId.selfLink)
+      - network: $(ref.clgvpc-@deploymentId.selfLink)
+        subnetwork: $(ref.clgsubnet-@deploymentId.selfLink)
         accessConfigs:
         - name: External NAT
           type: ONE_TO_ONE_NAT
@@ -126,16 +126,16 @@ resources:
 
 outputs:
   - name: vpcName
-    value: $(ref.north-pole-vpc-@deploymentId.name)
+    value: $(ref.clgvpc-@deploymentId.name)
 
   - name: vpcId
-    value: $(ref.north-pole-vpc-@deploymentId.id)
+    value: $(ref.clgvpc-@deploymentId.id)
 
   - name: subnetName
-    value: $(ref.north-pole-subnet-@deploymentId.name)
+    value: $(ref.clgsubnet-@deploymentId.name)
 
   - name: subnetId
-    value: $(ref.north-pole-subnet-@deploymentId.id)
+    value: $(ref.clgsubnet-@deploymentId.id)
 
   - name: vmPublicIp
     value: $(ref.labvm-@deploymentId.networkInterfaces[0].accessConfigs[0].natIP)
@@ -161,4 +161,3 @@ outputs:
 
   - name: Region
     value: @region
-
